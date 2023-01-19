@@ -27,6 +27,9 @@ class Cpu:
         queue.remove(job)
         queues[index].append(job)
 
+    def job_finished(self, job):
+        self.fcfs.remove(job)
+
     def dispatcher(self):
         to_execute: Job = None
         threshold = None
@@ -50,8 +53,11 @@ class Cpu:
             print(f"Executing job {to_execute} from queue {current_queue_name}...", end="")
             to_execute.execute(1)
             if threshold is not None and to_execute.executed_time >= threshold:
-                print("job moved to next queue")
+                print("job moved to next queue", end="")
                 self.move_to_next_queue(to_execute, current_queue)
+            elif to_execute.is_finished():
+                self.job_finished(to_execute)
+                print("job finished!", end="")
             print("")
 
     def count_jobs_in_queues(self):
