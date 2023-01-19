@@ -17,8 +17,9 @@ class Cpu:
         heappush(self.priority_queue, job)
 
     def move_job_to_roundrobinT1(self):
-        j = heappop(self.priority_queue)
-        self.roundrobinT1.append(j)
+        if len(self.priority_queue) > 0:
+            j = heappop(self.priority_queue)
+            self.roundrobinT1.append(j)
 
     def move_to_next_queue(self, job: Job, queue: list):
         queues = [self.roundrobinT1, self.roundrobinT2, self.fcfs]
@@ -30,20 +31,28 @@ class Cpu:
         to_execute: Job = None
         threshold = None
         current_queue = None
+        current_queue_name = None
         if len(self.roundrobinT1) != 0:
-            to_execute = self.roundrobinT1.pop(0)
+            to_execute = self.roundrobinT1[0]
             threshold = T1
             current_queue = self.roundrobinT1
+            current_queue_name = "RoundRobinT1"
         elif len(self.roundrobinT2) != 0:
-            to_execute = self.roundrobinT2.pop(0)
+            to_execute = self.roundrobinT2[0]
             threshold = T2
             current_queue = self.roundrobinT2
+            current_queue_name = "RoundRobinT2"
         elif len(self.fcfs) != 0:
-            to_execute = self.fcfs.pop(0)
+            to_execute = self.fcfs[0]
+            current_queue_name = "FCFS"
 
-        to_execute.execute(1)
-        if threshold is not None and to_execute.executed_time >= threshold:
-            self.move_to_next_queue(to_execute, current_queue)
+        if to_execute is not None:
+            print(f"Executing job {to_execute} from queue {current_queue_name}...", end="")
+            to_execute.execute(1)
+            if threshold is not None and to_execute.executed_time >= threshold:
+                print("job moved to next queue")
+                self.move_to_next_queue(to_execute, current_queue)
+            print("")
 
     def count_jobs_in_queues(self):
         return len(self.priority_queue) + len(self.roundrobinT1) + len(self.roundrobinT2)
@@ -79,9 +88,27 @@ class Main:
             j, next_interarrival = self.jobCreator()
             self.cpu.add_job(j)
             self.next_job_arriving_at += next_interarrival
+            print(f"Job Created. Next job at {self.next_job_arriving_at}")
 
     def run_main_thread(self):
+        global TIME
         for TIME in range(TOTAL_TIME):
+            print(f"{TIME}. Tick")
             self.check_job_creation()
             self.jobLoader()
             self.cpu.dispatcher()
+            time.sleep(1)
+
+    def start_program(self):
+        global TOTAL_TIME, AVG_Y, RATE_X, LEN_K, T1, T2
+        TOTAL_TIME = int(input("Enter Total Time: "))
+        AVG_Y = int(input("Enter Y: "))
+        RATE_X = int(input("Enter X: "))
+        LEN_K = int(input("Enter K: "))
+        T1 = int(input("Enter T1: "))
+        T2 = int(input("Enter T2: "))
+        self.run_main_thread()
+
+
+main = Main()
+main.start_program()
