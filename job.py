@@ -1,4 +1,6 @@
 import enum
+import pygame
+from pygame.rect import Rect
 
 
 class JOB_PRIORITY(enum.Enum):
@@ -16,6 +18,7 @@ class Job:
     service_time: int = None
     executed_time: int = 0
     priority: JOB_PRIORITY = None
+    rect: Rect = None
 
     def execute(self, time):
         self.executed_time += time
@@ -25,6 +28,9 @@ class Job:
 
     def is_finished(self):
         return self.time_remaining() == 0
+
+    def done_percent(self):
+        return self.executed_time / self.service_time
 
     def __init__(self, service_time, priority, creation_time) -> None:
         global LAST_ID

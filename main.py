@@ -1,10 +1,12 @@
 from typing import Tuple
 
+import display
 from job import Job
 from heapq import heappush, heappop
 import numpy as np
 import math
 import time
+import pygame
 
 
 class Cpu:
@@ -61,7 +63,7 @@ class Cpu:
             print("")
 
     def count_jobs_in_queues(self):
-        return len(self.priority_queue) + len(self.roundrobinT1) + len(self.roundrobinT2)
+        return len(self.fcfs) + len(self.roundrobinT1) + len(self.roundrobinT2)
 
 
 TOTAL_TIME = 1000
@@ -96,13 +98,31 @@ class Main:
             self.next_job_arriving_at += next_interarrival
             print(f"Job Created. Next job at {self.next_job_arriving_at}")
 
+    def render_display(self):
+        display.reset_screen()
+        display.get_queue_rects()
+        for index, item in enumerate(Cpu.priority_queue):
+            display.get_job_rect("priority_queue", item, index)
+
+        for index, item in enumerate(Cpu.roundrobinT1):
+            display.get_job_rect("roundRobinT1_queue", item, index)
+
+        for index, item in enumerate(Cpu.roundrobinT2):
+            display.get_job_rect("roundRobinT2_queue", item, index)
+
+        for index, item in enumerate(Cpu.fcfs):
+            display.get_job_rect("fcfs_queue", item, index)
+        display.update_screen()
+
     def run_main_thread(self):
         global TIME
         for TIME in range(TOTAL_TIME):
+            pygame.event.get()
             print(f"{TIME}. Tick")
             self.check_job_creation()
             self.jobLoader()
             self.cpu.dispatcher()
+            self.render_display()
             time.sleep(1)
 
     def start_program(self):
@@ -113,6 +133,7 @@ class Main:
         LEN_K = int(input("Enter K: "))
         T1 = int(input("Enter T1: "))
         T2 = int(input("Enter T2: "))
+        display.initialize_display()
         self.run_main_thread()
 
 
