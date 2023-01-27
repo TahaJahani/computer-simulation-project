@@ -1,6 +1,4 @@
 import enum
-import pygame
-from pygame.rect import Rect
 
 
 class JOB_PRIORITY(enum.Enum):
@@ -18,7 +16,6 @@ class Job:
     service_time: int = None
     executed_time: int = 0
     priority: JOB_PRIORITY = None
-    rect: Rect = None
 
     def execute(self, time):
         self.executed_time += time
@@ -48,8 +45,9 @@ class Job:
         return False
 
     def __eq__(self, o):
-        if self.priority == o.priority:
-            return self.creation_time == o.creation_time
+        if o is not None:
+            if self.priority == o.priority:
+                return self.creation_time == o.creation_time
         return False
 
     def __str__(self) -> str:

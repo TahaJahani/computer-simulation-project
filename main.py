@@ -15,6 +15,14 @@ class Cpu:
     roundrobinT2 = []
     fcfs = []
 
+    to_execute: Job = None
+
+    def get_job_by_id(self, job_id: int) -> Job:
+        for queue in [self.priority_queue, self.roundrobinT1, self.roundrobinT2, self.fcfs]:
+            for item in queue:
+                if item.id == job_id:
+                    return item
+
     def add_job(self, job: Job):
         heappush(self.priority_queue, job)
 
@@ -30,35 +38,39 @@ class Cpu:
         queues[index].append(job)
 
     def job_finished(self, job):
-        self.fcfs.remove(job)
+        if job in self.roundrobinT1:
+            self.roundrobinT1.remove(job)
+        elif job in self.roundrobinT2:
+            self.roundrobinT2.remove(job)
+        elif job in self.fcfs:
+            self.fcfs.remove(job)
 
     def dispatcher(self):
-        to_execute: Job = None
         threshold = None
         current_queue = None
         current_queue_name = None
         if len(self.roundrobinT1) != 0:
-            to_execute = self.roundrobinT1[0]
+            self.to_execute = self.roundrobinT1[0]
             threshold = T1
             current_queue = self.roundrobinT1
             current_queue_name = "RoundRobinT1"
         elif len(self.roundrobinT2) != 0:
-            to_execute = self.roundrobinT2[0]
+            self.to_execute = self.roundrobinT2[0]
             threshold = T2
             current_queue = self.roundrobinT2
             current_queue_name = "RoundRobinT2"
         elif len(self.fcfs) != 0:
-            to_execute = self.fcfs[0]
+            self.to_execute = self.fcfs[0]
             current_queue_name = "FCFS"
 
-        if to_execute is not None:
-            print(f"Executing job {to_execute} from queue {current_queue_name}...", end="")
-            to_execute.execute(1)
-            if threshold is not None and to_execute.executed_time >= threshold:
+        if self.to_execute is not None:
+            print(f"Executing job {self.to_execute} from queue {current_queue_name}...", end="")
+            self.to_execute.execute(1)
+            if threshold is not None and self.to_execute.executed_time >= threshold:
                 print("job moved to next queue", end="")
-                self.move_to_next_queue(to_execute, current_queue)
-            elif to_execute.is_finished():
-                self.job_finished(to_execute)
+                self.move_to_next_queue(self.to_execute, current_queue)
+            elif self.to_execute.is_finished():
+                self.job_finished(self.to_execute)
                 print("job finished!", end="")
             print("")
 
@@ -99,25 +111,31 @@ class Main:
             print(f"Job Created. Next job at {self.next_job_arriving_at}")
 
     def render_display(self):
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONUP:
+                job_id = display.check_collision()
+                display.select_job(self.cpu.get_job_by_id(job_id))
+
         display.reset_screen()
         display.get_queue_rects()
-        for index, item in enumerate(Cpu.priority_queue):
+        for index, item in enumerate(self.cpu.priority_queue):
             display.get_job_rect("priority_queue", item, index)
 
-        for index, item in enumerate(Cpu.roundrobinT1):
+        for index, item in enumerate(self.cpu.roundrobinT1):
             display.get_job_rect("roundRobinT1_queue", item, index)
 
-        for index, item in enumerate(Cpu.roundrobinT2):
+        for index, item in enumerate(self.cpu.roundrobinT2):
             display.get_job_rect("roundRobinT2_queue", item, index)
 
-        for index, item in enumerate(Cpu.fcfs):
+        for index, item in enumerate(self.cpu.fcfs):
             display.get_job_rect("fcfs_queue", item, index)
+        display.show_text_data(TIME, self.next_job_arriving_at)
         display.update_screen()
 
     def run_main_thread(self):
         global TIME
         for TIME in range(TOTAL_TIME):
-            pygame.event.get()
             print(f"{TIME}. Tick")
             self.check_job_creation()
             self.jobLoader()
