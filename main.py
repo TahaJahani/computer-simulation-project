@@ -2,6 +2,7 @@ from typing import Tuple
 
 import display
 from job import Job
+from reporter import Reporter
 from heapq import heappush, heappop
 import numpy as np
 import math
@@ -14,6 +15,7 @@ class Cpu:
     roundrobinT1 = []
     roundrobinT2 = []
     fcfs = []
+    idle_clocks = 0
 
     to_execute: Job = None
 
@@ -26,16 +28,23 @@ class Cpu:
     def add_job(self, job: Job):
         heappush(self.priority_queue, job)
 
-    def move_job_to_roundrobinT1(self):
+    def move_job_to_roundrobinT1(self, time: int):
         if len(self.priority_queue) > 0:
             j = heappop(self.priority_queue)
             self.roundrobinT1.append(j)
+            j.enters["RoundRobinT1"] = time
 
-    def move_to_next_queue(self, job: Job, queue: list):
+    def move_to_next_queue(self, job: Job, queue: list, time: int):
         queues = [self.roundrobinT1, self.roundrobinT2, self.fcfs]
         index = queues.index(queue) + 1
         queue.remove(job)
         queues[index].append(job)
+        if index == 1:
+            job.leaves["RoundRobinT1"] = time
+            job.enters["RoundRobinT2"] = time
+        else:
+            job.leaves["RoundRobinT2"] = time
+            job.enters["FCFS"] = time
 
     def job_finished(self, job):
         if job in self.roundrobinT1:
@@ -46,6 +55,7 @@ class Cpu:
             self.fcfs.remove(job)
 
     def dispatcher(self):
+        self.to_execute = None
         threshold = None
         current_queue = None
         current_queue_name = None
@@ -68,40 +78,44 @@ class Cpu:
             self.to_execute.execute(1)
             if threshold is not None and self.to_execute.executed_time >= threshold:
                 print("job moved to next queue", end="")
-                self.move_to_next_queue(self.to_execute, current_queue)
+                self.move_to_next_queue(self.to_execute, current_queue, time= TIME)
             elif self.to_execute.is_finished():
                 self.job_finished(self.to_execute)
                 print("job finished!", end="")
             print("")
+        else:
+            self.idle_clocks += 1
 
     def count_jobs_in_queues(self):
         return len(self.fcfs) + len(self.roundrobinT1) + len(self.roundrobinT2)
 
 
-TOTAL_TIME = 1000
+TOTAL_TIME = 100
 TIME = 0
-AVG_Y = 100
-RATE_X = 10
+AVG_Y = 15
+RATE_X = 15
 LEN_K = 8
-T1 = 5
-T2 = 10
+T1 = 10
+T2 = 15
 
 
 class Main:
     cpu = Cpu()
     next_job_arriving_at = 0
+    jobs = list()
 
     def jobCreator(self) -> Tuple[Job, int]:
         interarrival_time = math.ceil(np.random.exponential(RATE_X))  # Or 1/X?
         service_time = math.ceil(np.random.poisson(AVG_Y))
         priority = np.random.choice([1, 2, 3], 1, p=[0.7, 0.2, 0.1])[0]
         j = Job(service_time, priority, TIME)
+        Main.jobs.append(j)
         return j, interarrival_time
 
     def jobLoader(self):
         if self.cpu.count_jobs_in_queues() < LEN_K:
             for i in range(LEN_K):
-                self.cpu.move_job_to_roundrobinT1()
+                self.cpu.move_job_to_roundrobinT1(TIME)
 
     def check_job_creation(self):
         if TIME == self.next_job_arriving_at:
@@ -136,12 +150,13 @@ class Main:
     def run_main_thread(self):
         global TIME
         for TIME in range(TOTAL_TIME):
+            reporter.capture_len(self.cpu)
             print(f"{TIME}. Tick")
             self.check_job_creation()
             self.jobLoader()
             self.cpu.dispatcher()
             self.render_display()
-            time.sleep(1)
+            time.sleep(0.25)
 
     def start_program(self):
         global TOTAL_TIME, AVG_Y, RATE_X, LEN_K, T1, T2
@@ -156,4 +171,6 @@ class Main:
 
 
 main = Main()
+reporter = Reporter()
 main.start_program()
+reporter.export(total_clocks=TOTAL_TIME, cpu=main.cpu, jobs=Main.jobs)

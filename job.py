@@ -24,7 +24,7 @@ class Job:
         return self.service_time - self.executed_time
 
     def is_finished(self):
-        return self.time_remaining() == 0
+        return self.time_remaining() <= 0
 
     def done_percent(self):
         return self.executed_time / self.service_time
@@ -35,6 +35,8 @@ class Job:
         self.priority = priority
         self.creation_time = creation_time
         self.id = LAST_ID
+        self.enters = {"RoundRobinT1":0, "RoundRobinT2": 0, "FCFS": 0}
+        self.leaves = {"RoundRobinT1":0, "RoundRobinT2": 0, "FCFS": 0}
         LAST_ID += 1
 
     def __lt__(self, o):
