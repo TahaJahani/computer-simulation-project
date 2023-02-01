@@ -177,14 +177,14 @@ class Main:
 
     def start_program(self):
         global TOTAL_TIME, AVG_Y, RATE_X, LEN_K, T1, T2, BONUS, Z
-        # TOTAL_TIME = int(input("Enter Total Time: "))
-        # AVG_Y = int(input("Enter Y: "))
-        # RATE_X = int(input("Enter X: "))
-        # LEN_K = int(input("Enter K: "))
-        # T1 = int(input("Enter T1: "))
-        # T2 = int(input("Enter T2: "))
-        # BONUS = int (input("Enter BONUS mode: "))
-        # Z = int(input("Enter Z: "))
+        TOTAL_TIME = int(input("Enter Total Time: "))
+        AVG_Y = int(input("Enter Y: "))
+        RATE_X = int(input("Enter X: "))
+        LEN_K = int(input("Enter K: "))
+        T1 = int(input("Enter T1: "))
+        T2 = int(input("Enter T2: ")) + T1
+        BONUS = int (input("Enter BONUS mode: "))
+        Z = int(input("Enter Z: "))
 
         display.initialize_display()
         self.run_main_thread()
