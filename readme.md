@@ -243,7 +243,7 @@ python main.py
 
 صفحه ی گرافیکی به صورت زیر است:
 
-![graphics output](pygame.png)
+![graphics output](/readme-assets/pygame.png)
 
 رنگ سبز نشان دهنده اولویت پایین،
 زرد اولویت متوسط،
@@ -256,11 +256,11 @@ python main.py
 
 پس از اتمام شبیه سازی، نمودار توزیع تجمعی مدت انتظار در هر صف نمایش داده می شود که به صورت زیر است:
 
-![cdf of waiting times per list](wait_cdf.png)
+![cdf of waiting times per list](/readme-assets/wait_cdf.png)
 
 در صورتی که ورودی BONUS هم ۱ باشد، نمودار زمانی رخداد timeout ها هم نمایش داده می شود:
 
-![timeout occurrences](timeouts.png)
+![timeout occurrences](/readme-assets/timeouts.png)
 
 داده های خروجی داده شده هم به صورت زیر هستند.
 
