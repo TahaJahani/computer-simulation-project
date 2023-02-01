@@ -54,26 +54,41 @@ class Cpu:
         elif job in self.fcfs:
             self.fcfs.remove(job)
 
+    def dispatch_random(self):
+        queues = [self.roundrobinT1, self.roundrobinT2, self.fcfs]
+        queues_valid = list(filter(lambda c: len(c) > 0, queues))
+        if len(queues_valid) > 0:
+            choice = np.random.choice(len(queues_valid))
+            return queues_valid[choice]
+        return None  
+
     def dispatcher(self):
         self.to_execute = None
         threshold = None
         current_queue = None
         current_queue_name = None
-        if len(self.roundrobinT1) != 0:
+        random_choice = None
+        if BONUS == 1: random_choice = self.dispatch_random()
+        if (len(self.roundrobinT1) != 0 and BONUS == 0) or random_choice == self.roundrobinT1:
             self.to_execute = self.roundrobinT1[0]
             threshold = T1
             current_queue = self.roundrobinT1
             current_queue_name = "RoundRobinT1"
-        elif len(self.roundrobinT2) != 0:
+        elif (len(self.roundrobinT2) and BONUS == 0) != 0 or random_choice == self.roundrobinT2:
             self.to_execute = self.roundrobinT2[0]
             threshold = T2
             current_queue = self.roundrobinT2
             current_queue_name = "RoundRobinT2"
-        elif len(self.fcfs) != 0:
+        elif (len(self.fcfs) != 0 and BONUS == 0) or random_choice == self.fcfs:
             self.to_execute = self.fcfs[0]
             current_queue_name = "FCFS"
 
         if self.to_execute is not None:
+            if self.to_execute.is_timed_out(TIME):
+                print(f"Job {self.to_execute} from queue {current_queue_name} timed out. removing...", end="")
+                self.job_finished(self.to_execute)
+                reporter.note_timeout(TIME)
+                return
             print(f"Executing job {self.to_execute} from queue {current_queue_name}...", end="")
             self.to_execute.execute(1)
             if threshold is not None and self.to_execute.executed_time >= threshold:
@@ -90,13 +105,15 @@ class Cpu:
         return len(self.fcfs) + len(self.roundrobinT1) + len(self.roundrobinT2)
 
 
-TOTAL_TIME = 100
+TOTAL_TIME = 200
 TIME = 0
-AVG_Y = 15
-RATE_X = 15
+AVG_Y = 20
+RATE_X = 8
 LEN_K = 8
 T1 = 10
 T2 = 15
+BONUS = 0
+Z = 40
 
 
 class Main:
@@ -108,7 +125,7 @@ class Main:
         interarrival_time = math.ceil(np.random.exponential(RATE_X))  # Or 1/X?
         service_time = math.ceil(np.random.poisson(AVG_Y))
         priority = np.random.choice([1, 2, 3], 1, p=[0.7, 0.2, 0.1])[0]
-        j = Job(service_time, priority, TIME)
+        j = Job(service_time, priority, TIME, Z)
         Main.jobs.append(j)
         return j, interarrival_time
 
@@ -159,13 +176,16 @@ class Main:
             time.sleep(0.25)
 
     def start_program(self):
-        global TOTAL_TIME, AVG_Y, RATE_X, LEN_K, T1, T2
-        TOTAL_TIME = int(input("Enter Total Time: "))
-        AVG_Y = int(input("Enter Y: "))
-        RATE_X = int(input("Enter X: "))
-        LEN_K = int(input("Enter K: "))
-        T1 = int(input("Enter T1: "))
-        T2 = int(input("Enter T2: "))
+        global TOTAL_TIME, AVG_Y, RATE_X, LEN_K, T1, T2, BONUS, Z
+        # TOTAL_TIME = int(input("Enter Total Time: "))
+        # AVG_Y = int(input("Enter Y: "))
+        # RATE_X = int(input("Enter X: "))
+        # LEN_K = int(input("Enter K: "))
+        # T1 = int(input("Enter T1: "))
+        # T2 = int(input("Enter T2: "))
+        # BONUS = int (input("Enter BONUS mode: "))
+        # Z = int(input("Enter Z: "))
+
         display.initialize_display()
         self.run_main_thread()
 
@@ -173,4 +193,4 @@ class Main:
 main = Main()
 reporter = Reporter()
 main.start_program()
-reporter.export(total_clocks=TOTAL_TIME, cpu=main.cpu, jobs=Main.jobs)
+reporter.export(total_clocks=TOTAL_TIME, cpu=main.cpu, jobs=Main.jobs, bonus=BONUS)

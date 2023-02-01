@@ -25,6 +25,7 @@ class Reporter:
         self.fcfs_len = list()
         self.rr1_len = list()
         self.rr2_len = list()
+        self.timeouts = list()
         
     def capture_len(self, cpu):
         self.fcfs_len.append(len(cpu.fcfs))
@@ -110,11 +111,24 @@ class Reporter:
         else:
             print(f'average time spent in FCFS is {round(fcfs_sum / len(fcfs_list), 2)}')
         self.draw_wait_plot(rr1_list=rr1_list, rr2_list=rr2_list, fcfs_list= fcfs_list)
+
+    def note_timeout(self, time: int):
+        self.timeouts.append(time)
+    
+    def calculate_timeouts(self):
+        self.fig = plt.figure()
+        print(f'a total of {len(self.timeouts)} jobs timed out...')
+        if len (self.timeouts) > 0:
+            xvec = np.array(self.timeouts)
+            self.plot_ecdf(xvec, 111, "timeouts")    
+            plt.show()
+        return
         
-    def export(self, total_clocks, cpu, jobs):
+    def export(self, total_clocks, cpu, jobs, bonus):
         print(self.calculate_len_avg())
         utilization = "%.2f" % (1-(cpu.idle_clocks/total_clocks))
         print(f'cpu utilization was {utilization}')
         self.calculate_spent_time_queues(jobs=jobs, time=total_clocks)
+        if bonus == 1: self.calculate_timeouts()
         print("done")
         

@@ -25,11 +25,14 @@ class Job:
 
     def is_finished(self):
         return self.time_remaining() <= 0
+    
+    def is_timed_out(self, time: int):
+        return time - self.enters["RoundRobinT1"] > self.timeout
 
     def done_percent(self):
         return self.executed_time / self.service_time
 
-    def __init__(self, service_time, priority, creation_time) -> None:
+    def __init__(self, service_time, priority, creation_time, timeout) -> None:
         global LAST_ID
         self.service_time = service_time
         self.priority = priority
@@ -37,6 +40,7 @@ class Job:
         self.id = LAST_ID
         self.enters = {"RoundRobinT1":0, "RoundRobinT2": 0, "FCFS": 0}
         self.leaves = {"RoundRobinT1":0, "RoundRobinT2": 0, "FCFS": 0}
+        self.timeout = timeout
         LAST_ID += 1
 
     def __lt__(self, o):
